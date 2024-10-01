@@ -6,9 +6,8 @@
 
 using namespace std;
 
-
-int main(int argc, char** argv) {
+int main(int argc, char** argv)
+{
     cout << "Assignment-1" << endl;
     return 0;
 }
-
