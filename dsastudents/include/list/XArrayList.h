@@ -184,7 +184,7 @@ XArrayList<T>::XArrayList(
 {
     // TODO
     this -> deleteUserData = deleteUserData;
-    this -> itemEqual = itemEqual ? itemEqual : [](T &a, T&b) {return a == b;};
+    this -> itemEqual = itemEqual;
     this -> capacity = capacity;
     this -> count = 0;
     this -> data = new T[this -> capacity];
@@ -257,15 +257,10 @@ XArrayList<T>::~XArrayList()
     // TODO
     if(deleteUserData)
     {
-        for(int i = 0; i < count; i++)
-        {
-            deleteUserData(&data[i]);
-        }
+        this -> deleteUserData(this);
     }
-
     delete[] data;
     data = nullptr;
-    capacity = 0;
     count = 0;
 }
 
@@ -317,7 +312,7 @@ void XArrayList<T>::add(int index, T e)
         capacity = newCapacity;
     }
 
-    for(int i = 0; i > index; i--)
+    for(int i = count; i > index; i--)
     {
         data[i] = data[i - 1];
     }
@@ -385,12 +380,13 @@ template <class T>
 void XArrayList<T>::clear()
 {
     // TODO
-    count = 0;
-
-    for(int i = 0; i < capacity; i++)
+    if(deleteUserData)
     {
-        data[i] = T();
+        this -> deleteUserData(this);
     }
+    delete[] data;
+    data = new T[capacity];
+    count = 0;
 }
 
 template <class T>
