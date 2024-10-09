@@ -194,6 +194,7 @@ public:
             this->pList = iterator.pList;
             return *this;
         }
+        
         void remove(void (*removeItemData)(T) = 0)
         {
             pNode->prev->next = pNode->next;
@@ -210,16 +211,19 @@ public:
         {
             return pNode->data;
         }
+
         bool operator!=(const Iterator &iterator)
         {
             return pNode != iterator.pNode;
         }
+
         // Prefix ++ overload
         Iterator &operator++()
         {
             pNode = pNode->next;
             return *this;
         }
+
         // Postfix ++ overload
         Iterator operator++(int)
         {
@@ -266,10 +270,10 @@ public:
 
         void remove(void (*removeItemData)(T) = 0)
         {
-            currentNode -> prev -> next = currentNode -> next;
             currentNode -> next -> prev = currentNode -> prev;
-            Node *pNext = currentNode -> prev;
-            if(removeItemData != 0)
+            currentNode -> prev -> next = currentNode -> next;
+            Node *pNext = currentNode -> next;
+            if(removeItemData != nullptr)
             {
                 removeItemData(currentNode -> data);
             }
@@ -288,16 +292,16 @@ public:
             return currentNode != iterator.currentNode;
         }
 
-        BWDIterator &operator--()
+        BWDIterator &operator++()
         {
             currentNode = currentNode -> prev;
             return *this;
         }
 
-        BWDIterator operator--(int)
+        BWDIterator operator++(int)
         {
             BWDIterator iterator = *this;
-            --*this;
+            ++*this;
             return iterator;
         }
     };
@@ -325,7 +329,7 @@ DLinkedList<T>::DLinkedList(
     this -> tail -> prev = this -> head;
 
     this -> deleteUserData = deleteUserData;
-    this -> itemEqual = itemEqual ? itemEqual : [](T &lhs, T &rhs) {return lhs == rhs;};
+    this -> itemEqual = itemEqual;
     this -> count = 0;
 }
 
@@ -392,23 +396,26 @@ template <class T>
 DLinkedList<T>::~DLinkedList()
 {
     // TODO
+    if(this -> deleteUserData != nullptr)
+    {
+        this -> deleteUserData(this);
+    }
+
     Node *current = this -> head -> next;
 
     while(current != this -> tail)
     {
         Node *nextNode = current -> next;
-
-        if(this -> deleteUserData)
-        {
-            this -> deleteUserData(current -> data);
-        }
-
         delete current;
         current = nextNode;
     }
 
     delete this -> head;
     delete this -> tail;
+
+    this -> head = nullptr;
+    this -> tail = nullptr;
+    this -> count = 0;
 }
 
 template <class T>
@@ -417,11 +424,21 @@ void DLinkedList<T>::add(T e)
     // TODO
     Node *newNode = new Node(e);
 
-    newNode -> prev = this -> tail -> prev;
-    newNode -> next = this -> tail;
+    if(count == 0)
+    {
+        head -> next = newNode;
+        newNode -> prev = head;
+        newNode -> next = tail;
+        tail -> prev = newNode;
+    }
+    else
+    {
+        newNode -> prev = this -> tail -> prev;
+        newNode -> next = this -> tail;
 
-    this -> tail -> prev -> next = newNode;
-    this -> tail -> prev = newNode;
+        this -> tail -> prev -> next = newNode;
+        this -> tail -> prev = newNode;
+    }
 
     this -> count++;
 }
@@ -456,6 +473,7 @@ void DLinkedList<T>::add(int index, T e)
     else
     {
         Node *current = this -> head -> next;
+
         for(int i = 0; i < index; i++)
         {
             current = current -> next;
@@ -527,18 +545,22 @@ template <class T>
 void DLinkedList<T>::clear()
 {
     // TODO
-    Node *current = this -> head;
+    if(this -> deleteUserData != nullptr)
+    {
+        this -> deleteUserData(this);
+    }
 
-    while(current != nullptr)
+    Node *current = this -> head -> next;
+
+    while(current != this -> tail)
     {
         Node *nextNode = current -> next;
         delete current;
         current = nextNode;
     }
 
-    this -> head = nullptr;
-    this -> tail = nullptr;
-
+    this -> head -> next = this -> tail;
+    this -> tail -> prev = this -> head;
     this -> count = 0;
 }
 
@@ -565,31 +587,16 @@ template <class T>
 int DLinkedList<T>::indexOf(T item)
 {
     // TODO
-    Node *current = this -> head -> next;
-    int index = 0;
-
-    while (current != this -> tail)
-    {
-        if(this -> itemEqual != nullptr)
-        {
-            if(this -> itemEqual(current -> data, item))
-            {
-                return index;
-            }
-        }
-        else
-        {
-            if(current -> data == item)
-            {
-                return index;
-            }
-        }
-
-        current = current->next;
-        index++;
-    }
-
-    return -1;
+    Node *temp = this->head->next;
+  int i = 0;
+  while (temp != this->tail)
+  {
+    if (this->equals(item, temp->data, itemEqual))
+      return i;
+    temp = temp->next;
+    i++;
+  }
+  return -1;
 }
 
 template <class T>
@@ -614,7 +621,7 @@ template <class T>
 bool DLinkedList<T>::contains(T item)
 {
     // TODO
-    return indexOf(item) != 1;
+    return indexOf(item) != -1;
 }
 
 template <class T>
@@ -629,7 +636,7 @@ string DLinkedList<T>::toString(string (*item2str)(T &))
      * @return A string representation of the list with elements separated by commas and enclosed in square brackets.
      */
     // TODO
-    Node *current = this -> head;
+    Node *current = this -> head -> next;
 
     stringstream ss;
     ss << "[";
@@ -645,12 +652,11 @@ string DLinkedList<T>::toString(string (*item2str)(T &))
             ss << current -> data;
         }
 
-        if(current -> next != this -> tail)
-        {
-            ss << ", "
-        }
-
         current = current -> next;
+        if(current != this -> tail)
+        {
+            ss << ", ";
+        }
     }
 
     ss << "]";
