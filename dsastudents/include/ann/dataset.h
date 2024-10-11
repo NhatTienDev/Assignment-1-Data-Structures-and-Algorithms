@@ -102,6 +102,12 @@ public:
         xt::xarray<DType> single_data = xt::view(data, index, xt::all());
         xt::xarray<LType> single_label = xt::view(label, index, xt::all());
 
+        if(label.shape().size() > 0)
+        {
+            single_label = xt::view(label, index, xt::all());
+        }
+        else single_label = label;
+
         return DataLabel<DType, LType>(single_data, single_label);
     }
     
