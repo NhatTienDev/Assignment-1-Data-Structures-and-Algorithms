@@ -77,8 +77,8 @@ public:
         */
         this -> data = data;
         this -> label = label;
-        data_shape = this -> data.shape();
-        label_shape = this -> label.shape();
+        this -> data_shape = data.shape();
+        this -> label_shape = label.shape();
     }
     /* len():
      *  return the size of dimension 0
