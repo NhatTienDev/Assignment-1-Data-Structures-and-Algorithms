@@ -74,7 +74,7 @@ public:
     TensorDataset(xt::xarray<DType> data, xt::xarray<LType> label)
     {
         /* TODO: your code is here for the initialization
-        */
+         */
         this -> data = data;
         this -> label = label;
         this -> data_shape = data.shape();
@@ -100,14 +100,14 @@ public:
         if(index < 0 || index >= len()) throw std::out_of_range("Index is out of range!");
 
         xt::xarray<DType> single_data = xt::view(data, index, xt::all());
-        xt::xarray<LType> single_label = xt::view(label, index, xt::all());
+        xt::xarray<LType> single_label;
 
         if(label.shape().size() > 0)
         {
             single_label = xt::view(label, index, xt::all());
         }
         else single_label = label;
-
+        
         return DataLabel<DType, LType>(single_data, single_label);
     }
     
@@ -126,4 +126,3 @@ public:
 };
 
 #endif /* DATASET_H */
-
