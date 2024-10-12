@@ -135,6 +135,7 @@ public:
                 this -> total_batch = iterator.total_batch;
                 this -> batch_index = iterator.batch_index;
             }
+
             return *this;
         }
 
@@ -167,14 +168,17 @@ public:
                 int begin_index = this -> batch_index * this -> batch_size;
                 int end_index = begin_index + this -> batch_size;
 
+                xt::svector<unsigned long> fixed_size_data;
+                xt::svector<unsigned long> fixed_size_label;
+                
                 xt::xarray<DType> batch_data;
                 xt::xarray<LType> batch_label;
 
                 if(batch_index == total_batch - 1)
                 {
                     end_index = indices.size();
-                    xt::svector<unsigned long> fixed_size_data = ptr_dataset -> get_data_shape();
-                    xt::svector<unsigned long> fixed_size_label = ptr_dataset -> get_label_shape();
+                    fixed_size_data = ptr_dataset -> get_data_shape();
+                    fixed_size_label = ptr_dataset -> get_label_shape();
 
                     fixed_size_data[0] = end_index - begin_index;
                     batch_data = xt::empty<DType>(fixed_size_data);
@@ -185,8 +189,8 @@ public:
                 else
                 {
                     end_index = begin_index + this -> batch_size;
-                    xt::svector<unsigned long> fixed_size_data = ptr_dataset -> get_data_shape();
-                    xt::svector<unsigned long> fixed_size_label = ptr_dataset -> get_label_shape();
+                    fixed_size_data = ptr_dataset -> get_data_shape();
+                    fixed_size_label = ptr_dataset -> get_label_shape();
 
                     fixed_size_data[0] = batch_size;
                     batch_data = xt::empty<DType>(fixed_size_data);
@@ -206,7 +210,7 @@ public:
                     }
                     else batch_data = xt::empty<DType>({});
 
-                    if(dataset_index.getLabel().size() > 0)
+                    if(fixed_size_label.size() > 0)
                     {
                         xt::view(batch_label, i - begin_index, xt::all()) = dataset_index.getLabel();
                     }
