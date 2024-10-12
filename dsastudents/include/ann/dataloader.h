@@ -43,38 +43,47 @@ public:
         this -> drop_last = drop_last;
         this -> seed = seed;
 
-        int num_sample = this -> ptr_dataset -> len();
+        int num_sample = this -> ptr_dataset -> len(); // number of element in the dataset
+        this -> indices = xt::arange(0, num_sample);
+        this -> total_batch = num_sample/batch_size;
 
-        if(this -> batch_size > num_sample)
+        if(shuffle == true)
         {
-            this -> total_batch = 0;
+            if(seed >= 0)
+            {
+                xt::random::seed(seed);
+                xt::random::shuffle(this -> indices);
+            }
+            else
+            {
+                xt::random::shuffle(this -> indices);
+            }
+        }
+
+        if(drop_last == true)
+        {
+            if(batch_size <= num_sample)
+            {
+                int remove_element;
+                remove_element = num_sample - total_batch * batch_size;
+                this -> indices = xt::view(this -> indices, xt::range(0, num_sample - remove_element));
+            }
+            else
+            {
+                this -> total_batch = 0;
+                this -> indices = xt::view(this -> indices, xt::range(0, 0));
+            }
         }
         else
         {
-            this -> indices = xt::arange(num_sample);
-            this -> total_batch = num_sample/(this -> batch_size);
-
-            if(this -> total_batch != 0)
+            if(batch_size <= num_sample)
             {
-                if(this -> drop_last == true)
-                {
-                    int remove_element;
-                    remove_element = num_sample - total_batch * batch_size;
-                    this -> indices = xt::view(this -> indices, xt::range(0, num_sample - remove_element));
-                }
+                this -> indices = xt::view(this -> indices, xt::range(0, num_sample));
             }
-            
-            if(this -> shuffle == true)
+            else
             {
-                if(this -> seed >= 0)
-                {
-                    xt::random::seed(this -> seed);
-                    xt::random::shuffle(this -> indices);
-                }
-                else
-                {
-                    xt::random::shuffle(this -> indices);
-                }
+                this -> total_batch = 0;
+                this -> indices = xt::view(this -> indices, xt::range(0, 0));
             }
         }
     }
@@ -186,7 +195,6 @@ public:
                     batch_label = xt::empty<LType>(fixed_size_label);
                 }
 
-                // int counter = 0;
                 for(int i = begin_index; i < end_index; i++)
                 {
                     int idx = this -> indices[i];
