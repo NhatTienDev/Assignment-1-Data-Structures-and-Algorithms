@@ -52,6 +52,18 @@ public:
         else
         {
             this -> indices = xt::arange(num_sample);
+            this -> total_batch = num_sample/(this -> batch_size);
+
+            if(this -> total_batch != 0)
+            {
+                if(this -> drop_last == true)
+                {
+                    int remove_element;
+                    remove_element = num_sample - total_batch * batch_size;
+                    this -> indices = xt::view(this -> indices, xt::range(0, num_sample - remove_element));
+                }
+            }
+            
             if(this -> shuffle == true)
             {
                 if(this -> seed >= 0)
@@ -62,18 +74,6 @@ public:
                 else
                 {
                     xt::random::shuffle(this -> indices);
-                }
-            }
-
-            this -> total_batch = num_sample/(this -> batch_size);
-
-            if(this -> total_batch != 0)
-            {
-                if(this -> drop_last == true)
-                {
-                    int remove_element;
-                    remove_element = num_sample - total_batch * batch_size;
-                    this -> indices = xt::view(this -> indices, xt::range(0, num_sample - remove_element));
                 }
             }
         }
@@ -153,46 +153,61 @@ public:
         Batch<DType, LType> operator*() const
         {
             // TODO implement
-            int begin_index = this -> batch_index * this -> batch_size;
-            int end_index = begin_index + this -> batch_size;
-
-            xt::xarray<DType> batch_data;
-            xt::xarray<LType> batch_label;
-
-            if(batch_index == total_batch - 1)
+            if(indices.size() > 0)
             {
-                end_index = indices.size();
-                xt::svector<unsigned long> fixed_size_data = ptr_dataset -> get_data_shape();
-                xt::svector<unsigned long> fixed_size_label = ptr_dataset -> get_label_shape();
+                int begin_index = this -> batch_index * this -> batch_size;
+                int end_index = begin_index + this -> batch_size;
 
-                fixed_size_data[0] = end_index - begin_index;
-                batch_data = xt::empty<DType>(fixed_size_data);
+                xt::xarray<DType> batch_data;
+                xt::xarray<LType> batch_label;
 
-                fixed_size_label[0] = end_index - begin_index;
-                batch_label = xt::empty<LType>(fixed_size_label);
+                if(batch_index == total_batch - 1)
+                {
+                    end_index = indices.size();
+                    xt::svector<unsigned long> fixed_size_data = ptr_dataset -> get_data_shape();
+                    xt::svector<unsigned long> fixed_size_label = ptr_dataset -> get_label_shape();
+
+                    fixed_size_data[0] = end_index - begin_index;
+                    batch_data = xt::empty<DType>(fixed_size_data);
+
+                    fixed_size_label[0] = end_index - begin_index;
+                    batch_label = xt::empty<LType>(fixed_size_label);
+                }
+                else
+                {
+                    end_index = begin_index + this -> batch_size;
+                    xt::svector<unsigned long> fixed_size_data = ptr_dataset -> get_data_shape();
+                    xt::svector<unsigned long> fixed_size_label = ptr_dataset -> get_label_shape();
+
+                    fixed_size_data[0] = batch_size;
+                    batch_data = xt::empty<DType>(fixed_size_data);
+
+                    fixed_size_label[0] = batch_size;
+                    batch_label = xt::empty<LType>(fixed_size_label);
+                }
+
+                // int counter = 0;
+                for(int i = begin_index; i < end_index; i++)
+                {
+                    int idx = this -> indices[i];
+                    DataLabel<DType, LType> dataset_index = this -> ptr_dataset -> getitem(idx);
+
+                    if(dataset_index.getData().size() > 0)
+                    {
+                        xt::view(batch_data, i - begin_index, xt::all()) = dataset_index.getData();
+                    }
+                    else batch_data = xt::empty<DType>({});
+
+                    if(dataset_index.getLabel().size() > 0)
+                    {
+                        xt::view(batch_label, i - begin_index, xt::all()) = dataset_index.getLabel();
+                    }
+                    else batch_label = xt::empty<LType>({});
+                }
+
+                return Batch<DType, LType>(batch_data, batch_label);
             }
-            else
-            {
-                end_index = begin_index + this -> batch_size;
-                xt::svector<unsigned long> fixed_size_data = ptr_dataset -> get_data_shape();
-                xt::svector<unsigned long> fixed_size_label = ptr_dataset -> get_label_shape();
-
-                fixed_size_data[0] = batch_size;
-                batch_data = xt::empty<DType>(fixed_size_data);
-
-                fixed_size_label[0] = batch_size;
-                batch_label = xt::empty<LType>(fixed_size_label);
-            }
-          
-            for(int i = begin_index; i < end_index; i++)
-            {
-                int idx = this -> indices[i];
-                DataLabel<DType, LType> data_label = this -> ptr_dataset -> getitem(idx);
-                xt::view(batch_data, i - begin_index, xt::all()) = data_label.getData();
-                xt::view(batch_label, i - begin_index, xt::all()) = data_label.getLabel();
-            }
-
-            return Batch<DType, LType>(batch_data, batch_label);
+            return Batch<DType, LType>(xt::xarray<DType>(), xt::xarray<LType>());
         }
     };
 };
