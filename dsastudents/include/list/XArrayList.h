@@ -235,7 +235,7 @@ XArrayList<T> &XArrayList<T>::operator=(const XArrayList<T> &list)
     if(this != &list)
     {
         delete[] this -> data;
-
+        
         this -> deleteUserData = list.deleteUserData;
         this -> itemEqual = list.itemEqual;
         this -> capacity = list.capacity;
@@ -246,6 +246,7 @@ XArrayList<T> &XArrayList<T>::operator=(const XArrayList<T> &list)
         {
             this -> data[i] = list.data[i];
         }
+        
     }
 
     return *this;
@@ -259,6 +260,7 @@ XArrayList<T>::~XArrayList()
     {
         this -> deleteUserData(this);
     }
+
     delete[] data;
     data = nullptr;
     count = 0;
@@ -277,13 +279,12 @@ void XArrayList<T>::add(T e)
         {
             newData[i] = data[i];
         }
-
+        
         delete[] data;
-
         data = newData;
         capacity = newCapacity;
     }
-
+    
     data[count++] = e;
 }
 
@@ -339,7 +340,7 @@ T XArrayList<T>::removeAt(int index)
 
     count--;
     data[count] = T();
-
+    
     return removedItem;
 }
 
@@ -357,7 +358,6 @@ bool XArrayList<T>::removeItem(T item, void (*removeItemData)(T))
     }
 
     removeAt(index);
-
     return true;
 }
 
@@ -385,6 +385,7 @@ void XArrayList<T>::clear()
         this -> deleteUserData(this);
     }
     delete[] data;
+    
     data = new T[capacity];
     count = 0;
 }

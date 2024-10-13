@@ -1,19 +1,28 @@
 {
         "cSpell.words": [
+                "arange",
+                "bbegin",
                 "DEFNITION",
                 "DLINKEDLIST",
                 "DLINKEDLISTDEMO",
                 "dlist",
+                "getitem",
                 "ILIST",
                 "LISTHEADER",
                 "Lpoint",
                 "LTSACH",
+                "matmul",
                 "nbfs",
                 "nbhost",
                 "softmax",
+                "svector",
                 "XARRAYLIST",
                 "XARRAYLISTDEMO",
                 "xlist",
+                "XTENSOR",
                 "xvector"
-        ]
+        ],
+        "files.associations": {
+                "sstream": "cpp"
+        }
 }

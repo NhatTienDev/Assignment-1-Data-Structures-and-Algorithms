@@ -45,13 +45,13 @@ public:
 
         int num_sample = this -> ptr_dataset -> len(); // number of element in the dataset
         this -> indices = xt::arange(0, num_sample);
-        this -> total_batch = num_sample/batch_size;
+        this -> total_batch = num_sample/(this -> batch_size);
 
-        if(shuffle == true)
-        {
-            if(seed >= 0)
+        if(this -> shuffle == true)
+        {   
+            if(this -> seed >= 0)
             {
-                xt::random::seed(seed);
+                xt::random::seed(this -> seed);
                 xt::random::shuffle(this -> indices);
             }
             else
@@ -60,9 +60,9 @@ public:
             }
         }
 
-        if(drop_last == true)
+        if(this -> drop_last == true)
         {
-            if(batch_size <= num_sample)
+            if(this -> batch_size <= num_sample)
             {
                 int remove_element;
                 remove_element = num_sample - total_batch * batch_size;
@@ -76,7 +76,7 @@ public:
         }
         else
         {
-            if(batch_size <= num_sample)
+            if(this -> batch_size <= num_sample)
             {
                 this -> indices = xt::view(this -> indices, xt::range(0, num_sample));
             }
@@ -174,11 +174,11 @@ public:
                 xt::xarray<DType> batch_data;
                 xt::xarray<LType> batch_label;
 
-                if(batch_index == total_batch - 1)
+                if(this -> batch_index == this -> total_batch - 1)
                 {
                     end_index = indices.size();
-                    fixed_size_data = ptr_dataset -> get_data_shape();
-                    fixed_size_label = ptr_dataset -> get_label_shape();
+                    fixed_size_data = this -> ptr_dataset -> get_data_shape();
+                    fixed_size_label = this -> ptr_dataset -> get_label_shape();
 
                     fixed_size_data[0] = end_index - begin_index;
                     batch_data = xt::empty<DType>(fixed_size_data);
@@ -189,8 +189,8 @@ public:
                 else
                 {
                     end_index = begin_index + this -> batch_size;
-                    fixed_size_data = ptr_dataset -> get_data_shape();
-                    fixed_size_label = ptr_dataset -> get_label_shape();
+                    fixed_size_data = this -> ptr_dataset -> get_data_shape();
+                    fixed_size_label = this -> ptr_dataset -> get_label_shape();
 
                     fixed_size_data[0] = batch_size;
                     batch_data = xt::empty<DType>(fixed_size_data);
